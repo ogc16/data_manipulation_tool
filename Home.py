@@ -39,7 +39,7 @@ Navigate to the pages using the sidebar to access different features of the appl
 If you have any questions or feedback, please reach out to us at [support@data-tools.com](mailto:support@data-tools.com).
 
 ### Contributing
-If you would like to contribute to this project, please visit our [GitHub repository](https://github.com/your-repo).
+If you would like to contribute to this project, please visit our [GitHub repository](https://github.com/data_manipulation_tool).
             
 ##### Enjoy exploring !  🚀
 
@@ -54,7 +54,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("## About")
-    st.markdown("Data manipulation tools App v1.0")
+    st.markdown("Data manipulation tool v1.0")
     st.markdown("This app is designed to help you convert and analyze your data files easily.")
 
     st.markdown("---")
