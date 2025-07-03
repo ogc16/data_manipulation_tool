@@ -54,8 +54,8 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("## About")
-    st.markdown("Data manipulation tool ")
-    st.markdown("### V1.0")
+    st.markdown("Data manipulation tool.")
+    st.markdown("#### V1.0")
     st.markdown("This app is designed to help you convert and analyze your data files easily.")
 
     st.markdown("---")
