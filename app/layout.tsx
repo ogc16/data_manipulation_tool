@@ -9,6 +9,7 @@ const navItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/convert", label: "File Converter", icon: "📁" },
   { href: "/analyze", label: "Data Analysis", icon: "📊" },
+  { href: "/zip", label: "File Zipper", icon: "🗜️" },
 ];
 
 export default function RootLayout({
