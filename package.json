@@ -1,0 +1,29 @@
+{
+  "name": "data_manipulation_tool",
+  "version": "2.0.0",
+  "description": "A comprehensive Next.js application for file conversion and data analysis.",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "docx": "^9.7.1",
+    "next": "^16.2.9",
+    "papaparse": "^5.5.3",
+    "pdf-parse": "^2.4.5",
+    "plotly.js-dist-min": "^3.6.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-plotly.js": "^3.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^6.0.3"
+  }
+}

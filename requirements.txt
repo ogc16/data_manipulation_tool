@@ -1,5 +1,0 @@
-pandas==2.3.0
-plotly==6.2.0
-streamlit==1.46.1
-tabula==1.0.5
-tabula_py==2.10.0
