@@ -65,20 +65,20 @@ export default function Home() {
         <h3>Contact</h3>
         <p>
           If you have any questions or feedback, please reach out to us at{" "}
-          <a href="mailto:support@data-tools.com">support@data-tools.com</a>.
+          <a href="mailto:info@techgaetano.com">info@techgaetano.com</a>.
         </p>
 
         <h3 style={{ marginTop: "1rem" }}>Contributing</h3>
         <p>
           If you would like to contribute to this project, please visit our{" "}
-          <a href="https://github.com/data_manipulation_tool" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/ogc16/data_manipulation_tool" target="_blank" rel="noopener noreferrer">
             GitHub repository
           </a>
           .
         </p>
 
         <p style={{ marginTop: "0.8rem", color: "#667085" }}>
-          Enjoy exploring! 🚀
+          Explore! 🚀
         </p>
       </div>
     </div>
