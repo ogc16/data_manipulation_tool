@@ -13,6 +13,9 @@
   --success: #2ec4b6;
   --success-hover: #25a99d;
   --danger: #e63946;
+  --danger-hover: #c1121f;
+  --tab-inactive: transparent;
+  --tab-active-border: var(--primary);
   --sidebar-width: 240px;
 }
 
@@ -32,6 +35,9 @@
     --success: #14b8a6;
     --success-hover: #0d9488;
     --danger: #f43f5e;
+    --danger-hover: #e11d48;
+    --tab-inactive: transparent;
+    --tab-active-border: var(--primary);
   }
 }
 
@@ -235,8 +241,8 @@ a:hover { text-decoration: underline; }
 .btn-primary:disabled { background: var(--primary-disabled); cursor: not-allowed; }
 .btn-success { background: var(--success); color: white; }
 .btn-success:hover { background: var(--success-hover); }
-.btn-danger { background: var(--danger, #e74c3c); color: white; }
-.btn-danger:hover { background: var(--danger-hover, #c0392b); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: var(--danger-hover); }
 
 input, select, textarea {
   width: 100%;
@@ -253,6 +259,31 @@ label {
   display: block;
   margin-bottom: 0.35rem;
   color: var(--text-secondary);
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.tab {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--tab-active-border);
 }
 
 /* ── File drop ── */

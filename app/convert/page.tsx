@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import * as XLSX from "xlsx";
+import JSZip from "jszip";
 import FileUpload from "../components/FileUpload";
 import DataTable from "../components/DataTable";
 import ErrorMessage from "../components/ErrorMessage";
@@ -13,6 +14,7 @@ const SOURCES = [
   { id: "json", label: "JSON", ext: ".json" },
   { id: "pdf", label: "PDF", ext: ".pdf" },
   { id: "word", label: "Word", ext: ".docx" },
+  { id: "pptx", label: "PowerPoint", ext: ".pptx" },
 ] as const;
 
 const TARGETS = [
@@ -20,13 +22,14 @@ const TARGETS = [
   { id: "excel", label: "Excel", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
   { id: "json", label: "JSON", mime: "application/json;charset=utf-8;" },
   { id: "word", label: "Word", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+  { id: "pptx", label: "PowerPoint", mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
 ] as const;
 
 type SourceId = (typeof SOURCES)[number]["id"];
 type TargetId = (typeof TARGETS)[number]["id"];
 
 function isBinaryFormat(id: TargetId) {
-  return id === "excel" || id === "word";
+  return id === "excel" || id === "word" || id === "pptx";
 }
 
 export default function ConvertPage() {
@@ -81,6 +84,27 @@ export default function ConvertPage() {
         const json = arr as Record<string, unknown>[];
         setParsed(json);
         setColumns(json.length > 0 ? Object.keys(json[0]) : []);
+      } else if (from === "pptx") {
+        const buf = await f.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        const slideFiles = Object.keys(zip.files).filter((k) => /^ppt\/slides\/slide\d+\.xml$/.test(k)).sort();
+        const rows: Record<string, unknown>[] = [];
+
+        for (const slidePath of slideFiles) {
+          const slideNum = parseInt(slidePath.match(/\d+/)?.[0] ?? "0", 10);
+          const content = await zip.files[slidePath].async("string");
+          const texts = [...content.matchAll(/<a:t[^>]*>([^<]+)<\/a:t>/g)].map((m) => m[1]);
+          if (texts.length > 0) {
+            rows.push({ Slide: slideNum, Content: texts.join(" ") });
+          }
+        }
+
+        if (rows.length === 0) {
+          rows.push({ Slide: 1, Content: "(no text found)" });
+        }
+
+        setParsed(rows);
+        setColumns(Object.keys(rows[0]));
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to read file");
@@ -114,6 +138,9 @@ export default function ConvertPage() {
         const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
         const cols = data.length > 0 ? Object.keys(data[0]) : [];
         return { data, cols, name };
+      }
+      if (from === "pptx") {
+        return { data: parsed!, cols: columns, name };
       }
       return { data: parsed!, cols: columns, name };
     }
@@ -155,6 +182,41 @@ export default function ConvertPage() {
         setOutput(bytes);
         setOutputText(`[DOCX — ${bytes.byteLength} bytes]`);
         downloadBlob(bytes, newName, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        setLoading(false);
+        return;
+      }
+
+      if (to === "pptx") {
+        const PptxGenJS = (await import("pptxgenjs")).default;
+        const pres = new PptxGenJS();
+        pres.layout = "LAYOUT_16x9";
+
+        const slide = pres.addSlide();
+        slide.addText(name, { x: 0.5, y: 0.3, w: 9, h: 0.8, fontSize: 20, bold: true, color: "4361EE" });
+
+        const headerCells = cols.map((c) => ({ text: c, options: { bold: true, fill: { color: "E8EAF6" }, fontSize: 10 } }));
+        const dataCells = data.slice(0, 50).map((row) =>
+          cols.map((c) => ({ text: String(row[c] ?? ""), options: { fontSize: 9 } }))
+        );
+
+        slide.addTable([headerCells, ...dataCells], {
+          x: 0.5,
+          y: 1.3,
+          w: 9,
+          colW: cols.map(() => 9 / cols.length),
+          fontSize: 10,
+          border: { type: "solid", pt: 0.5, color: "CCCCCC" },
+          autoPage: false,
+        });
+
+        const blob = (await pres.write({ outputType: "blob" })) as Blob;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${name}.pptx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setOutputText(`[PPTX — ${blob.size} bytes]`);
         setLoading(false);
         return;
       }

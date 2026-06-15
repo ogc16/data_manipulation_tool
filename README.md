@@ -9,13 +9,27 @@ A comprehensive web application for file conversion and data analysis, built wit
 ### File Converter
 Choose any source and target format with the two-dropdown selector:
 
-| From → To | CSV | Excel | JSON | Word |
-|-----------|:---:|:-----:|:----:|:----:|
-| **CSV** | — | ✅ | ✅ | ✅ |
-| **Excel** | ✅ | — | ✅ | ✅ |
-| **JSON** | ✅ | ✅ | — | ✅ |
-| **PDF** | ✅ | ✅ | ✅ | ✅ |
-| **Word** | ✅ | ✅ | ✅ | — |
+| From → To | CSV | Excel | JSON | Word | PowerPoint |
+|-----------|:---:|:-----:|:----:|:----:|:----------:|
+| **CSV** | — | ✅ | ✅ | ✅ | ✅ |
+| **Excel** | ✅ | — | ✅ | ✅ | ✅ |
+| **JSON** | ✅ | ✅ | — | ✅ | ✅ |
+| **PDF** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Word** | ✅ | ✅ | ✅ | — | ✅ |
+| **PowerPoint** | ✅ | ✅ | ✅ | ✅ | — |
+
+### ZIP & Extract
+- **Create ZIP** — drag-and-drop multiple files into a single archive
+- **Extract ZIP** — upload a ZIP file and preview/download individual files
+
+### File Encryption
+- **Encrypt** any file with a password (AES-256-GCM via Web Crypto API)
+- **Decrypt** `.enc` files using the correct password
+
+### Scan & Export
+- Open your device camera to capture document photos
+- Upload existing images from your device
+- Export captured images as **PDF**, **Word**, **Excel**, or **CSV**
 
 ### Data Analysis
 - Upload and browse CSV/Excel files with sortable, paginated tables
@@ -31,9 +45,12 @@ Choose any source and target format with the two-dropdown selector:
 
 - **Framework:** Next.js 16 (App Router), React 19
 - **Charts:** Plotly.js (react-plotly.js)
-- **Data:** SheetJS (xlsx)
-- **PDF:** pdf-parse (server-side text extraction)
-- **Word:** docx (server-side generation)
+- **Data:** SheetJS (xlsx), PapaParse
+- **PDF:** pdf-parse (server-side text extraction), jsPDF (client-side generation)
+- **Word:** docx (server-side generation), mammoth (client-side parsing)
+- **PowerPoint:** pptxgenjs (client-side generation)
+- **ZIP:** JSZip (client-side)
+- **Encryption:** Web Crypto API (client-side, no dependencies)
 - **Deploy:** GitHub Pages via GitHub Actions
 
 ## Getting Started
