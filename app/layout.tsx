@@ -18,6 +18,10 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const basePath = "/data_manipulation_tool";
+  const relativePath = pathname?.startsWith(basePath)
+    ? pathname.slice(basePath.length) || "/"
+    : pathname || "/";
 
   return (
     <html lang="en">
@@ -49,8 +53,8 @@ export default function RootLayout({
             <div className="sidebar-nav">
               {navItems.map((item) => {
                 const active = item.href === "/"
-                  ? pathname === "/"
-                  : pathname?.startsWith(item.href) ?? false;
+                  ? relativePath === "/" || relativePath === ""
+                  : relativePath.startsWith(item.href);
                 return (
                   <Link
                     key={item.href}
