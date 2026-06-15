@@ -7,12 +7,15 @@ A comprehensive web application for file conversion and data analysis, built wit
 ## Features
 
 ### File Converter
-Convert between multiple formats — all client-side (except PDF):
+Choose any source and target format with the two-dropdown selector:
 
-| From | To | | |
-|------|----|----|----|
-| Excel | CSV, JSON | PDF | CSV, Word |
-| CSV | Excel, JSON | JSON | CSV, Excel |
+| From → To | CSV | Excel | JSON | Word |
+|-----------|:---:|:-----:|:----:|:----:|
+| **CSV** | — | ✅ | ✅ | ✅ |
+| **Excel** | ✅ | — | ✅ | ✅ |
+| **JSON** | ✅ | ✅ | — | ✅ |
+| **PDF** | ✅ | ✅ | ✅ | ✅ |
+| **Word** | ✅ | ✅ | ✅ | — |
 
 ### Data Analysis
 - Upload and browse CSV/Excel files with sortable, paginated tables

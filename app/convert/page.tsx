@@ -7,71 +7,33 @@ import DataTable from "../components/DataTable";
 import ErrorMessage from "../components/ErrorMessage";
 import Loading from "../components/Loading";
 
-const CONVERSIONS = [
-  { id: "excel-to-csv", label: "Excel to CSV", from: ".xlsx,.xls", toExt: "csv", toMime: "text/csv;charset=utf-8;", binary: false as const },
-  { id: "excel-to-json", label: "Excel to JSON", from: ".xlsx,.xls", toExt: "json", toMime: "application/json;charset=utf-8;", binary: false },
-  { id: "csv-to-excel", label: "CSV to Excel", from: ".csv", toExt: "xlsx", toMime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", binary: true },
-  { id: "csv-to-json", label: "CSV to JSON", from: ".csv", toExt: "json", toMime: "application/json;charset=utf-8;", binary: false },
-  { id: "json-to-csv", label: "JSON to CSV", from: ".json", toExt: "csv", toMime: "text/csv;charset=utf-8;", binary: false },
-  { id: "json-to-excel", label: "JSON to Excel", from: ".json", toExt: "xlsx", toMime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", binary: true },
-  { id: "pdf-to-csv", label: "PDF to CSV", from: ".pdf", toExt: "csv", toMime: "text/csv;charset=utf-8;", binary: false },
-  { id: "pdf-to-word", label: "PDF to Word", from: ".pdf", toExt: "docx", toMime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", binary: true },
+const SOURCES = [
+  { id: "csv", label: "CSV", ext: ".csv" },
+  { id: "excel", label: "Excel", ext: ".xlsx,.xls" },
+  { id: "json", label: "JSON", ext: ".json" },
+  { id: "pdf", label: "PDF", ext: ".pdf" },
+  { id: "word", label: "Word", ext: ".docx" },
 ] as const;
 
-type ConversionId = (typeof CONVERSIONS)[number]["id"];
+const TARGETS = [
+  { id: "csv", label: "CSV", mime: "text/csv;charset=utf-8;" },
+  { id: "excel", label: "Excel", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+  { id: "json", label: "JSON", mime: "application/json;charset=utf-8;" },
+  { id: "word", label: "Word", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+] as const;
 
-const convMap = Object.fromEntries(CONVERSIONS.map((c) => [c.id, c])) as Record<ConversionId, typeof CONVERSIONS[number]>;
+type SourceId = (typeof SOURCES)[number]["id"];
+type TargetId = (typeof TARGETS)[number]["id"];
 
-async function parseInput(file: File, id: ConversionId): Promise<Record<string, unknown>[]> {
-  const buf = await file.arrayBuffer();
-
-  if (id.startsWith("excel-") || id === "csv-to-excel" || id === "csv-to-json") {
-    const wb = XLSX.read(buf, { type: "array" });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
-  }
-
-  if (id.startsWith("json-")) {
-    const text = new TextDecoder().decode(buf);
-    const parsed = JSON.parse(text);
-    if (Array.isArray(parsed)) return parsed as Record<string, unknown>[];
-    if (typeof parsed === "object" && parsed !== null) return [parsed as Record<string, unknown>];
-    throw new Error("JSON must be an array or object");
-  }
-
-  throw new Error("Unsupported conversion");
-}
-
-function toOutput(data: Record<string, unknown>[], id: ConversionId): string | Uint8Array {
-  if (id.endsWith("-csv")) {
-    const ws = XLSX.utils.json_to_sheet(data);
-    return XLSX.utils.sheet_to_csv(ws);
-  }
-  if (id.endsWith("-json")) {
-    return JSON.stringify(data, null, 2);
-  }
-  if (id.endsWith("-excel")) {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    return XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  }
-  throw new Error("Unsupported output format");
-}
-
-function downloadBlob(content: string | Uint8Array, filename: string, mime: string) {
-  const blob = new Blob([content as BlobPart], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function isBinaryFormat(id: TargetId) {
+  return id === "excel" || id === "word";
 }
 
 export default function ConvertPage() {
-  const [convId, setConvId] = useState<ConversionId>("excel-to-csv");
+  const [from, setFrom] = useState<SourceId>("csv");
+  const [to, setTo] = useState<TargetId>("excel");
   const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState("");
   const [parsed, setParsed] = useState<Record<string, unknown>[] | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
   const [sheets, setSheets] = useState<string[]>([]);
@@ -81,11 +43,11 @@ export default function ConvertPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isExcelInput = convId.startsWith("excel-");
-  const isPdfInput = convId.startsWith("pdf-");
+  const needsServer = from === "pdf" || from === "word";
 
   const handleFile = useCallback(async (f: File) => {
     setFile(f);
+    setFileName(f.name.replace(/\.[^.]+$/, ""));
     setOutput(null);
     setOutputText(null);
     setError(null);
@@ -95,7 +57,7 @@ export default function ConvertPage() {
     setSelectedSheet("");
 
     try {
-      if (isExcelInput && /\.xlsx?$/i.test(f.name)) {
+      if (from === "excel") {
         const buf = await f.arrayBuffer();
         const wb = XLSX.read(buf, { type: "array" });
         setSheets(wb.SheetNames);
@@ -104,89 +66,116 @@ export default function ConvertPage() {
         const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
         setParsed(json);
         setColumns(json.length > 0 ? Object.keys(json[0]) : []);
-      } else if (convId.startsWith("csv-") && f.name.endsWith(".csv")) {
-        const json = await parseInput(f, convId);
+      } else if (from === "csv") {
+        const buf = await f.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
         setParsed(json);
         setColumns(json.length > 0 ? Object.keys(json[0]) : []);
-      } else if (convId.startsWith("json-") && f.name.endsWith(".json")) {
-        const json = await parseInput(f, convId);
+      } else if (from === "json") {
+        const buf = await f.arrayBuffer();
+        const text = new TextDecoder().decode(buf);
+        const parsed = JSON.parse(text);
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        const json = arr as Record<string, unknown>[];
         setParsed(json);
         setColumns(json.length > 0 ? Object.keys(json[0]) : []);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to read file");
     }
-  }, [convId, isExcelInput]);
+  }, [from]);
 
   const switchSheet = (name: string) => {
     setSelectedSheet(name);
     setOutput(null);
     setOutputText(null);
     if (!file) return;
-    parseInput(file, convId).then((json) => {
+    const bufPromise = file.arrayBuffer();
+    bufPromise.then((buf) => {
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[name];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
       setParsed(json);
       setColumns(json.length > 0 ? Object.keys(json[0]) : []);
     }).catch((e) => setError(e instanceof Error ? e.message : "Failed to switch sheet"));
   };
 
+  const getData = async (): Promise<{ data: Record<string, unknown>[]; cols: string[]; name: string }> => {
+    if (!file) throw new Error("No file");
+    const name = fileName;
+
+    if (!needsServer) {
+      if (from === "excel" && sheets.length > 1) {
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        const ws = wb.Sheets[selectedSheet];
+        const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
+        const cols = data.length > 0 ? Object.keys(data[0]) : [];
+        return { data, cols, name };
+      }
+      return { data: parsed!, cols: columns, name };
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/parse-binary", { method: "POST", body: formData });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error ?? "Parsing failed");
+    }
+    const { rows, columns: apiColumns } = await res.json() as { rows: Record<string, unknown>[]; columns: string[] };
+    return { data: rows, cols: apiColumns ?? (rows.length > 0 ? Object.keys(rows[0]) : []), name };
+  };
+
   const handleConvert = async () => {
-    if (!file) return;
     setLoading(true);
     setError(null);
     setOutput(null);
     setOutputText(null);
 
     try {
-      if (convId === "pdf-to-csv") {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/convert-pdf", { method: "POST", body: formData });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error ?? "PDF conversion failed");
-        }
-        const { csv } = await res.json();
-        setOutput(csv);
-        setOutputText(csv);
-        setLoading(false);
-        return;
-      }
+      const { data, cols, name } = await getData();
 
-      if (convId === "pdf-to-word") {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/convert-pdf-word", { method: "POST", body: formData });
+      if (to === "word") {
+        const res = await fetch("/api/generate-word", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rows: data, columns: cols, filename: name }),
+        });
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.error ?? "PDF to Word conversion failed");
+          throw new Error(err.error ?? "Word generation failed");
         }
-        const { base64, filename } = await res.json();
+        const { base64, filename: newName } = await res.json();
         const binaryStr = atob(base64);
         const bytes = new Uint8Array(binaryStr.length);
         for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
         setOutput(bytes);
         setOutputText(`[DOCX — ${bytes.byteLength} bytes]`);
-
-        downloadBlob(bytes, filename, convMap[convId].toMime);
+        downloadBlob(bytes, newName, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
         setLoading(false);
         return;
       }
 
-      let data: Record<string, unknown>[];
-
-      if (isExcelInput && sheets.length > 1) {
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, { type: "array" });
-        const ws = wb.Sheets[selectedSheet];
-        data = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
-      } else {
-        data = await parseInput(file, convId);
+      if (to === "csv") {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        setOutput(csv);
+        setOutputText(csv);
+      } else if (to === "json") {
+        const json = JSON.stringify(data, null, 2);
+        setOutput(json);
+        setOutputText(json);
+      } else if (to === "excel") {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        const xlsx = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        setOutput(xlsx);
+        setOutputText(`[Binary XLSX — ${xlsx.byteLength} bytes]`);
       }
-
-      const result = toOutput(data, convId);
-      setOutput(result);
-      if (typeof result === "string") setOutputText(result);
-      else setOutputText(`[Binary ${convMap[convId].toExt.toUpperCase()} — ${result.byteLength} bytes]`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Conversion failed");
     } finally {
@@ -195,45 +184,67 @@ export default function ConvertPage() {
   };
 
   const handleDownload = () => {
-    if (!output || !file) return;
-    const info = convMap[convId];
-    const baseName = file.name.replace(/\.[^.]+$/, "");
-    const suffix = isExcelInput && sheets.length > 1 ? `_${selectedSheet}` : "";
-    downloadBlob(output, `${baseName}${suffix}.${info.toExt}`, info.toMime);
+    if (!output) return;
+    const target = TARGETS.find((t) => t.id === to)!;
+    downloadBlob(output, `${fileName}.${to}`, target.mime);
   };
 
   const totalRows = parsed?.length ?? 0;
+  const accept = SOURCES.find((s) => s.id === from)?.ext ?? "";
+  const fromLabel = SOURCES.find((s) => s.id === from)?.label ?? "";
+  const toLabel = TARGETS.find((t) => t.id === to)?.label ?? "";
+  const canConvert = file && (needsServer || (parsed !== null && totalRows > 0));
+  const sameFormat = from === to;
 
   return (
     <div className="container">
       <h1 className="page-title">📁 File Converter</h1>
       <hr className="divider" />
 
-      <div className="card">
-        <label htmlFor="conv-type">Select conversion type</label>
-        <select
-          id="conv-type"
-          value={convId}
-          onChange={(e) => {
-            setConvId(e.target.value as ConversionId);
-            setFile(null);
-            setOutput(null);
-            setOutputText(null);
-            setError(null);
-            setParsed(null);
-            setSheets([]);
-          }}
-        >
-          {CONVERSIONS.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
-          ))}
-        </select>
+      <div className="card" style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <label htmlFor="from-type">From</label>
+          <select
+            id="from-type"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value as SourceId);
+              setFile(null);
+              setOutput(null);
+              setOutputText(null);
+              setError(null);
+              setParsed(null);
+              setSheets([]);
+            }}
+          >
+            {SOURCES.map((s) => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <label htmlFor="to-type">To</label>
+          <select
+            id="to-type"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value as TargetId);
+              setOutput(null);
+              setOutputText(null);
+              setError(null);
+            }}
+          >
+            {TARGETS.filter((t) => t.id !== from).map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="card">
         <FileUpload
-          accept={convMap[convId].from}
-          label="Upload a file"
+          accept={accept}
+          label={`Upload a ${fromLabel} file`}
           onFile={handleFile}
           file={file}
         />
@@ -263,32 +274,20 @@ export default function ConvertPage() {
         </div>
       )}
 
-      {!isPdfInput && (
-        <button
-          className="btn btn-primary"
-          disabled={!file || loading || totalRows === 0}
-          onClick={handleConvert}
-        >
-          {loading ? "Converting..." : `Convert to ${convMap[convId].toExt.toUpperCase()}`}
-        </button>
-      )}
-
-      {isPdfInput && (
-        <button
-          className="btn btn-primary"
-          disabled={!file || loading || !/\.pdf$/i.test(file?.name ?? "")}
-          onClick={handleConvert}
-        >
-          {loading ? "Converting..." : `Convert PDF to ${convMap[convId].toExt.toUpperCase()}`}
-        </button>
-      )}
+      <button
+        className="btn btn-primary"
+        disabled={!canConvert || loading || sameFormat}
+        onClick={handleConvert}
+      >
+        {loading ? "Converting..." : `Convert ${fromLabel} to ${toLabel}`}
+      </button>
 
       {error && <ErrorMessage message={error} />}
       {loading && <Loading text="Converting file..." />}
 
       {outputText && (
         <div className="card">
-          <h3>Converted {convMap[convId].toExt.toUpperCase()} data</h3>
+          <h3>Converted {toLabel} data</h3>
           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
             {typeof output === "string"
               ? `${output.split("\n").length} lines · ${(new Blob([output]).size / 1024).toFixed(1)} KB`
@@ -299,7 +298,7 @@ export default function ConvertPage() {
           )}
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
             <button className="btn btn-success" onClick={handleDownload}>
-              Download {convMap[convId].toExt.toUpperCase()}
+              Download {toLabel}
             </button>
             {typeof output === "string" && (
               <button className="btn btn-primary" onClick={() => navigator.clipboard.writeText(output as string)}>
@@ -311,4 +310,14 @@ export default function ConvertPage() {
       )}
     </div>
   );
+}
+
+function downloadBlob(content: string | Uint8Array, filename: string, mime: string) {
+  const blob = new Blob([content as BlobPart], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
