@@ -260,10 +260,12 @@ export default function ConvertPage() {
 
   return (
     <div className="container">
-      <h1 className="page-title">📁 File Converter</h1>
-      <hr className="divider" />
+      <div className="page-header fade-in">
+        <h1 className="page-title">File converter</h1>
+        <p className="page-subtitle">Convert between CSV, Excel, JSON, PDF, Word, and PowerPoint.</p>
+      </div>
 
-      <div className="card" style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+      <div className="card fade-in fade-in-delay-1" style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 180 }}>
           <label htmlFor="from-type">From</label>
           <select
@@ -303,7 +305,7 @@ export default function ConvertPage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card fade-in fade-in-delay-2">
         <FileUpload
           accept={accept}
           label={`Upload a ${fromLabel} file`}
@@ -326,7 +328,7 @@ export default function ConvertPage() {
       )}
 
       {parsed && columns.length > 0 && (
-        <div className="card">
+        <div className="card fade-in fade-in-delay-3">
           <h3>Preview</h3>
           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
             {totalRows} row{totalRows !== 1 ? "s" : ""} · {columns.length} column{columns.length !== 1 ? "s" : ""}
@@ -348,7 +350,7 @@ export default function ConvertPage() {
       {loading && <Loading text="Converting file..." />}
 
       {outputText && (
-        <div className="card">
+        <div className="card fade-in">
           <h3>Converted {toLabel} data</h3>
           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
             {typeof output === "string"

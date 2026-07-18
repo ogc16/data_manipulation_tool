@@ -105,8 +105,10 @@ export default function EncryptPage() {
 
   return (
     <div className="container">
-      <h1 className="page-title">🔒 File Encryption</h1>
-      <hr className="divider" />
+      <div className="page-header fade-in">
+        <h1 className="page-title">Encryption</h1>
+        <p className="page-subtitle">AES-256-GCM file encryption and decryption with a password.</p>
+      </div>
 
       <div className="tabs">
         <button className={`tab${tab === "encrypt" ? " active" : ""}`} onClick={() => { setTab("encrypt"); setResult(null); setError(null); }}>

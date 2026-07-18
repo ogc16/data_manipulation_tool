@@ -4,11 +4,11 @@
   "description": "A comprehensive Next.js application for file conversion and data analysis.",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "export": "next build",
+    "dev": "node node_modules/next/dist/bin/next dev --webpack",
+    "build": "node node_modules/next/dist/bin/next build --webpack",
+    "export": "node node_modules/next/dist/bin/next build --webpack",
     "start": "npx serve@latest out",
-    "lint": "next lint"
+    "lint": "node node_modules/next/dist/bin/next lint"
   },
   "dependencies": {
     "docx": "^9.7.1",

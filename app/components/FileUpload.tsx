@@ -17,8 +17,7 @@ export default function FileUpload({ accept, label, onFile, file }: FileUploadPr
     e.preventDefault();
     setDragging(false);
     const f = e.dataTransfer.files?.[0];
-    if (f && f.type) onFile(f);
-    else if (f) onFile(f);
+    if (f) onFile(f);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,15 +43,15 @@ export default function FileUpload({ accept, label, onFile, file }: FileUploadPr
           style={{ display: "none" }}
         />
         {file ? (
-          <p style={{ color: "#4361ee", fontWeight: 500, fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--primary)", fontWeight: 500, fontSize: "0.88rem" }}>
             {file.name} ({(file.size / 1024).toFixed(1)} KB)
           </p>
         ) : (
           <>
-            <p style={{ color: "#667085", marginBottom: "0.3rem" }}>
+            <p style={{ color: "var(--text-secondary)", marginBottom: "0.25rem", fontSize: "0.9rem" }}>
               Drag & drop or click to browse
             </p>
-            <p style={{ fontSize: "0.8rem", color: "#98a2b3" }}>
+            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
               Accepted: {accept}
             </p>
           </>

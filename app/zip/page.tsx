@@ -146,8 +146,10 @@ export default function ZipPage() {
 
   return (
     <div className="container">
-      <h1 className="page-title">🗜️ ZIP & Extract</h1>
-      <hr className="divider" />
+      <div className="page-header fade-in">
+        <h1 className="page-title">ZIP & extract</h1>
+        <p className="page-subtitle">Create ZIP archives or extract ZIP and 7z files.</p>
+      </div>
 
       <div className="tabs">
         <button className={`tab${tab === "create" ? " active" : ""}`} onClick={() => setTab("create")}>

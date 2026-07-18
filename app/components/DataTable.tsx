@@ -57,7 +57,7 @@ export default function DataTable({ columns, rows, maxHeight }: DataTableProps) 
                 style={{ cursor: "pointer", userSelect: "none" }}
               >
                 {col}{" "}
-                {sortCol === col ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                {sortCol === col ? (sortDir === "asc" ? "\u25B2" : "\u25BC") : ""}
               </th>
             ))}
           </tr>
@@ -65,7 +65,7 @@ export default function DataTable({ columns, rows, maxHeight }: DataTableProps) 
         <tbody>
           {sorted.map((row, i) => (
             <tr key={i}>
-              <td style={{ color: "#98a2b3", fontSize: "0.8rem" }}>{i + 1}</td>
+              <td style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>{i + 1}</td>
               {columns.map((col) => (
                 <td key={col}>{String(row[col] ?? "")}</td>
               ))}

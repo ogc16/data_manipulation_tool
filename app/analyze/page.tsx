@@ -423,8 +423,10 @@ export default function AnalyzePage() {
 
   return (
     <div className="container">
-      <h1 className="page-title">📊 Data Analysis Tool</h1>
-      <hr className="divider" />
+      <div className="page-header fade-in">
+        <h1 className="page-title">Data analysis</h1>
+        <p className="page-subtitle">Upload CSV or Excel files for interactive charts, statistics, and merging.</p>
+      </div>
 
       <div className="card">
         <FileUpload accept=".csv,.xlsx" label="Upload a file (add to workspace)" onFile={handleFile} />

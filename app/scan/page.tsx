@@ -180,8 +180,10 @@ export default function ScanPage() {
 
   return (
     <div className="container">
-      <h1 className="page-title">📄 Scan & Export</h1>
-      <hr className="divider" />
+      <div className="page-header fade-in">
+        <h1 className="page-title">Scan & export</h1>
+        <p className="page-subtitle">Capture or upload images and export as PDF, Word, Excel, or CSV.</p>
+      </div>
 
       <div className="card">
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>

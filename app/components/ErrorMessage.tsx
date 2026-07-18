@@ -1,7 +1,7 @@
 export default function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="card" style={{ borderLeft: "4px solid #e63946" }}>
-      <p style={{ color: "#e63946" }}>{message}</p>
+    <div className="card" style={{ background: "var(--danger-soft)", borderColor: "var(--danger)" }}>
+      <p style={{ color: "var(--danger)", fontSize: "0.88rem" }}>{message}</p>
     </div>
   );
 }
